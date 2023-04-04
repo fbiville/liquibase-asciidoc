@@ -109,36 +109,21 @@ public class AsciidocChangeLogParser implements ChangeLogParser {
     }
 
     private static void validateLiquibaseBlock(Block block) throws ChangeLogParseException {
-        if (block.getAttribute("id") == null) {
-            throw new ChangeLogParseException("Liquibase code listing ID attribute must be set");
-        }
-        if (block.getAttribute("author") == null) {
-            throw new ChangeLogParseException("Liquibase code listing author attribute must be set");
-        }
         Object runOnChange = block.getAttribute("runOnChange");
-        if (runOnChange != null && !isValidBooleanString(runOnChange)) {
+        if (runOnChange != null && !(isCaseInsensitiveTrue(runOnChange) || isCaseInsensitiveFalse(runOnChange))) {
             throw new ChangeLogParseException(
                     String.format("Liquibase code listing runOnChange attribute must be set to either \"true\" or \"false\", found: %s", runOnChange));
         }
         Object runAlways = block.getAttribute("runAlways");
-        if (runAlways != null && !isValidBooleanString(runAlways)) {
+        if (runAlways != null && !(isCaseInsensitiveTrue(runAlways) || isCaseInsensitiveFalse(runAlways))) {
             throw new ChangeLogParseException(
                     String.format("Liquibase code listing runAlways attribute must be set to either \"true\" or \"false\", found: %s", runAlways));
         }
         Object runInTransaction = block.getAttribute("runInTransaction");
-        if (runInTransaction != null && !isValidBooleanString(runInTransaction)) {
+        if (runInTransaction != null && !(isCaseInsensitiveTrue(runInTransaction) || isCaseInsensitiveFalse(runInTransaction))) {
             throw new ChangeLogParseException(
                     String.format("Liquibase code listing runInTransaction attribute must be set to either \"true\" or \"false\", found: %s", runInTransaction));
         }
-    }
-
-    private static boolean isValidBooleanString(Object rawValue) {
-        if (!(rawValue instanceof String)) {
-            return false;
-        }
-        String value = (String) rawValue;
-        return value.toLowerCase(Locale.ENGLISH).equals("true")
-                || value.toLowerCase(Locale.ENGLISH).equals("false");
     }
 
     private static RawSQLChange convertToChange(String source) {
@@ -148,10 +133,23 @@ public class AsciidocChangeLogParser implements ChangeLogParser {
     }
 
     private static boolean targetsLiquibase(StructuralNode node) {
-        Object target = node.getAttribute("target");
-        if (target == null) {
+        if (isCaseInsensitiveFalse(node.getAttribute("liquibase", "true"))) {
             return false;
         }
-        return "liquibase".equals(((String) target).toLowerCase(Locale.ENGLISH));
+        return node.hasAttribute("id") && node.hasAttribute("author");
+    }
+
+    private static boolean isCaseInsensitiveTrue(Object value) {
+        if (!(value instanceof String)) {
+            return false;
+        }
+        return ((String) value).toLowerCase(Locale.ENGLISH).equals("true");
+    }
+
+    private static boolean isCaseInsensitiveFalse(Object value) {
+        if (!(value instanceof String)) {
+            return false;
+        }
+        return ((String) value).toLowerCase(Locale.ENGLISH).equals("false");
     }
 }
