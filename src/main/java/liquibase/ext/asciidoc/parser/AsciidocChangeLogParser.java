@@ -67,17 +67,24 @@ public class AsciidocChangeLogParser implements ChangeLogParser {
         return changeLog;
     }
 
-    private List<StructuralNode> findCodeListings(String physicalChangeLogLocation, ResourceAccessor resourceAccessor) throws IOException {
+    private List<StructuralNode> findCodeListings(String physicalChangeLogLocation, ResourceAccessor resourceAccessor) throws IOException, ChangeLogParseException {
         String content = readContents(resourceAccessor, physicalChangeLogLocation);
-        Document document = asciidocParser.load(
-                content,
-                Options.builder().safe(SafeMode.SAFE).build()
-        );
+        Document document = loadDocument(content);
         Map<Object, Object> selectors = new HashMap<>(2);
         selectors.put("context", ":listing");
         selectors.put("style", "source");
-        List<StructuralNode> nodes = document.findBy(selectors);
-        return nodes;
+        return document.findBy(selectors);
+    }
+
+    private Document loadDocument(String content) throws ChangeLogParseException {
+        try {
+            return asciidocParser.load(
+                    content,
+                    Options.builder().safe(SafeMode.SAFE).build()
+            );
+        } catch (AdocIncludeException e) {
+            throw new ChangeLogParseException(e);
+        }
     }
 
     private static String readContents(ResourceAccessor resourceAccessor, String physicalChangeLogLocation) throws IOException {

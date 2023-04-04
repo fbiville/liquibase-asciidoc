@@ -88,14 +88,16 @@ CREATE (:Baz {name: "no-name"})
 
     def "parses nested Liquibase code listings"() {
         given:
-        def accessor = new MockResourceAccessor(["first.adoc"    : """
+        def accessor = new MockResourceAccessor([
+                "first.adoc" : """
 [source,cypher,id=first,author=fbiville]
 ----
 CREATE (:First)
 ----
+
+include::second.adoc[]
 """,
-                                                 "changelog.adoc": """
-include::first.adoc[]
+                "second.adoc": """
 
 [source,cypher,id=second,author=fbiville]
 ----
@@ -104,7 +106,8 @@ CREATE (:Second)
 
 include::third.adoc[]
 """,
-                                                 "third.adoc"    : """
+                "third.adoc" : """
+
 [source,cypher,id=third,author=fbiville]
 ----
 CREATE (:Third)
@@ -114,10 +117,10 @@ CREATE (:Third)
         def parser = new AsciidocChangeLogParser()
 
         when:
-        def changeLog = parser.parse("changelog.adoc", null, accessor)
+        def changeLog = parser.parse("first.adoc", null, accessor)
 
         then:
-        changeLog.physicalFilePath == "changelog.adoc"
+        changeLog.physicalFilePath == "first.adoc"
         def changeSets = changeLog.getChangeSets()
         changeSets.size() == 3
         changeSets[0].id == "first"
@@ -362,12 +365,11 @@ include::unknown.adoc[]
         def parser = new AsciidocChangeLogParser()
 
         when:
-        parser.parse("unknown.adoc", null, accessor)
+        parser.parse("changelog.adoc", null, accessor)
 
         then:
         def exception = thrown(ChangeLogParseException)
-        exception.cause instanceof IOException
-        exception.cause.message == "could not find change log resource unknown.adoc"
+        exception.cause instanceof AdocIncludeException
     }
 
 
