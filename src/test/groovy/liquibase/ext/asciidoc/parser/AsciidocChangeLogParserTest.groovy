@@ -21,7 +21,7 @@ class AsciidocChangeLogParserTest extends Specification {
     def "parses Liquibase code listings"() {
         given:
         def accessor = new MockResourceAccessor(["changelog.adoc": """
-[source,cypher,target=liquibase,id=baz-creation,author=fbiville]
+[source,cypher,id=baz-creation,author=fbiville]
 ----
 CREATE (:Baz {name: "no-name"})
 ----
@@ -47,10 +47,29 @@ CREATE (:Baz {name: "no-name"})
         ((RawSQLChange) changeSet.changes.first()).sql == "CREATE (:Baz {name: \"no-name\"})"
     }
 
+    def "parses Liquibase code listings explicitly targeting Liquibase"() {
+        given:
+        def accessor = new MockResourceAccessor(["changelog.adoc": """
+[source,cypher,id=baz-creation,author=fbiville,liquibase=true]
+----
+CREATE (:Baz {name: "no-name"})
+----
+"""])
+        def parser = new AsciidocChangeLogParser()
+
+        when:
+        def changeLog = parser.parse("changelog.adoc", null, accessor)
+
+        then:
+        def changeSet = changeLog.getChangeSets().first()
+        changeSet.id == "baz-creation"
+        changeSet.author == "fbiville"
+    }
+
     def "parses Liquibase code listings with change log parameters"() {
         given:
         def accessor = new MockResourceAccessor(["changelog.adoc": """
-[source,cypher,target=liquibase,id=baz-creation,author=fbiville]
+[source,cypher,id=baz-creation,author=fbiville]
 ----
 CREATE (:Baz {name: "no-name"})
 ----
@@ -70,7 +89,7 @@ CREATE (:Baz {name: "no-name"})
     def "parses nested Liquibase code listings"() {
         given:
         def accessor = new MockResourceAccessor(["first.adoc"    : """
-[source,cypher,target=liquibase,id=first,author=fbiville]
+[source,cypher,id=first,author=fbiville]
 ----
 CREATE (:First)
 ----
@@ -78,7 +97,7 @@ CREATE (:First)
                                                  "changelog.adoc": """
 include::first.adoc[]
 
-[source,cypher,target=liquibase,id=second,author=fbiville]
+[source,cypher,id=second,author=fbiville]
 ----
 CREATE (:Second)
 ----
@@ -86,7 +105,7 @@ CREATE (:Second)
 include::third.adoc[]
 """,
                                                  "third.adoc"    : """
-[source,cypher,target=liquibase,id=third,author=fbiville]
+[source,cypher,id=third,author=fbiville]
 ----
 CREATE (:Third)
 ----
@@ -115,7 +134,7 @@ CREATE (:Third)
     def "parses Liquibase code listings that always run"() {
         given:
         def accessor = new MockResourceAccessor(["changelog.adoc": """
-[source,cypher,target=liquibase,id=baz-creation,author=fbiville,runAlways=true]
+[source,cypher,id=baz-creation,author=fbiville,runAlways=true]
 ----
 CREATE (:Baz {name: "no-name"})
 ----
@@ -136,7 +155,7 @@ CREATE (:Baz {name: "no-name"})
     def "parses Liquibase code listings that run on change"() {
         given:
         def accessor = new MockResourceAccessor(["changelog.adoc": """
-[source,cypher,target=liquibase,id=baz-creation,author=fbiville,runOnChange=true]
+[source,cypher,id=baz-creation,author=fbiville,runOnChange=true]
 ----
 CREATE (:Baz {name: "no-name"})
 ----
@@ -157,7 +176,7 @@ CREATE (:Baz {name: "no-name"})
     def "parses Liquibase code listings that target one DBMS"() {
         given:
         def accessor = new MockResourceAccessor(["changelog.adoc": """
-[source,cypher,target=liquibase,id=baz-creation,author=fbiville,dbms=neo4j]
+[source,cypher,id=baz-creation,author=fbiville,dbms=neo4j]
 ----
 CREATE (:Baz {name: "no-name"})
 ----
@@ -178,7 +197,7 @@ CREATE (:Baz {name: "no-name"})
     def "parses Liquibase code listings that target two DBMS"() {
         given:
         def accessor = new MockResourceAccessor(["changelog.adoc": """
-[source,cypher,target=liquibase,id=baz-creation,author=fbiville,dbms="neo4j,postgres"]
+[source,cypher,id=baz-creation,author=fbiville,dbms="neo4j,postgres"]
 ----
 CREATE (:Baz {name: "no-name"})
 ----
@@ -199,7 +218,7 @@ CREATE (:Baz {name: "no-name"})
     def "parses Liquibase code listings that does not run in transaction"() {
         given:
         def accessor = new MockResourceAccessor(["changelog.adoc": """
-[source,cypher,target=liquibase,id=baz-creation,author=fbiville,runInTransaction=false]
+[source,cypher,id=baz-creation,author=fbiville,runInTransaction=false]
 ----
 CREATE (:Baz {name: "no-name"})
 ----
@@ -220,7 +239,7 @@ CREATE (:Baz {name: "no-name"})
     def "ignores non Liquibase code listings"() {
         given:
         def accessor = new MockResourceAccessor(["changelog.adoc": """
-[source,cypher]
+[source,cypher,id=eally,author=ing-a-book,liquibase=false]
 ----
 RETURN 42
 ----
@@ -234,10 +253,10 @@ RETURN 42
         changeLog.getChangeSets().isEmpty()
     }
 
-    def "rejects Liquibase code listings without ID"() {
+    def "ignores code listings without ID"() {
         given:
         def accessor = new MockResourceAccessor(["changelog.adoc": """
-[source,cypher,target=liquibase,author=fbiville]
+[source,cypher,author=fbiville]
 ----
 CREATE (:Baz {name: "no-name"})
 ----
@@ -245,17 +264,16 @@ CREATE (:Baz {name: "no-name"})
         def parser = new AsciidocChangeLogParser()
 
         when:
-        parser.parse("changelog.adoc", null, accessor)
+        def changeLog = parser.parse("changelog.adoc", null, accessor)
 
         then:
-        def exception = thrown(ChangeLogParseException.class)
-        exception.message == "Liquibase code listing ID attribute must be set"
+        changeLog.getChangeSets().isEmpty()
     }
 
-    def "rejects Liquibase code listings without author"() {
+    def "ignores Liquibase code listings without author"() {
         given:
         def accessor = new MockResourceAccessor(["changelog.adoc": """
-[source,cypher,target=liquibase,id=baz-creation]
+[source,cypher,id=baz-creation]
 ----
 CREATE (:Baz {name: "no-name"})
 ----
@@ -263,17 +281,16 @@ CREATE (:Baz {name: "no-name"})
         def parser = new AsciidocChangeLogParser()
 
         when:
-        parser.parse("changelog.adoc", null, accessor)
+        def changeLog = parser.parse("changelog.adoc", null, accessor)
 
         then:
-        def exception = thrown(ChangeLogParseException.class)
-        exception.message == "Liquibase code listing author attribute must be set"
+        changeLog.getChangeSets().isEmpty()
     }
 
     def "rejects Liquibase code listings with erroneous runAlways values"() {
         given:
         def accessor = new MockResourceAccessor(["changelog.adoc": """
-[source,cypher,target=liquibase,id=baz-creation,author=fbiville,runAlways=42]
+[source,cypher,id=baz-creation,author=fbiville,runAlways=42]
 ----
 CREATE (:Baz {name: "no-name"})
 ----
@@ -291,7 +308,7 @@ CREATE (:Baz {name: "no-name"})
     def "rejects Liquibase code listings with erroneous runOnChange values"() {
         given:
         def accessor = new MockResourceAccessor(["changelog.adoc": """
-[source,cypher,target=liquibase,id=baz-creation,author=fbiville,runOnChange=42]
+[source,cypher,id=baz-creation,author=fbiville,runOnChange=42]
 ----
 CREATE (:Baz {name: "no-name"})
 ----
@@ -309,7 +326,7 @@ CREATE (:Baz {name: "no-name"})
     def "rejects Liquibase code listings with erroneous runInTransaction values"() {
         given:
         def accessor = new MockResourceAccessor(["changelog.adoc": """
-[source,cypher,target=liquibase,id=baz-creation,author=fbiville,runInTransaction=42]
+[source,cypher,id=baz-creation,author=fbiville,runInTransaction=42]
 ----
 CREATE (:Baz {name: "no-name"})
 ----
