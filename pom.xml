@@ -6,7 +6,7 @@
 
     <groupId>net.biville</groupId>
     <artifactId>liquibase-asciidoc</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
 
     <name>Liquibase Asciidoc Extension</name>
     <description>Adds supports for Liquibase change logs in Asciidoc</description>
