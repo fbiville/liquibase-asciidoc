@@ -1,6 +1,7 @@
 package liquibase.ext.asciidoc.parser;
 
 import liquibase.Scope;
+import liquibase.exception.LiquibaseException;
 import liquibase.resource.ResourceAccessor;
 import org.asciidoctor.ast.Document;
 import org.asciidoctor.extension.IncludeProcessor;
@@ -8,6 +9,7 @@ import org.asciidoctor.extension.PreprocessorReader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,8 +37,13 @@ class LiquibaseAdocInclude extends IncludeProcessor {
     }
 
     private static String readContents(ResourceAccessor resourceAccessor, String physicalChangeLogLocation) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resourceAccessor.openStream(null, physicalChangeLogLocation)))) {
-            return reader.lines().collect(Collectors.joining("\n"));
+        try (InputStream stream = resourceAccessor.openStream(null, physicalChangeLogLocation)) {
+            if (stream == null) {
+                throw new AdocIncludeException("could not find change log resource to include %s", physicalChangeLogLocation);
+            }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+                return reader.lines().collect(Collectors.joining("\n"));
+            }
         }
     }
 }
