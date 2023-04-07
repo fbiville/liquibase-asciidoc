@@ -2,6 +2,8 @@ FROM python:3
 
 WORKDIR /usr/src/app
 
+# Update CI workflow if you add plugins here!
+
 RUN apt update -yq && \
     pip3 install mkdocs mkdocs-material markdown-include mkdocs-markdownextradata-plugin mkdocs-badges
 
