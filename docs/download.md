@@ -8,7 +8,7 @@ First install [Liquibase](https://www.liquibase.org/download).
 
 === "CLI users"
     1. Locate the Liquibase installation folder (subsequently called `LIQUIBASE_HOME`)
-    1. Download the extension JAR (from [GitHub]({{ github_repo }}/releases/
+    1. Download the extension JAR (from [GitHub]({{ github_repo }}/releases/)
     or [Maven Central]({{ maven_central }}/{{ group_id_url }}/{{ artifact_id }}/{{ version }}/{{ artifact_id }}-{{ version }}-full.jar))
     1. Place the JAR in the `plugins` folder of `LIQUIBASE_HOME`
     1. Run `liquibase --version`, the extension should be listed
