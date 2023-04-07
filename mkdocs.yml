@@ -1,0 +1,39 @@
+site_name: Liquibase ❤️ Asciidoc
+edit_uri: edit/main/docs/
+nav:
+  - Home: index.md
+  - Download: download.md
+  - Quick start: quickstart.md
+repo_name: 'liquibase-asciidoc'
+repo_url: 'https://github.com/fbiville/liquibase-asciidoc'
+theme:
+  name: material
+  features:
+    - content.action.edit
+    - content.code.copy
+  icon:
+    edit: material/pencil
+    view: material/eye
+plugins:
+  - markdownextradata: { }
+  - badges
+extra:
+  maven_central: https://repo1.maven.org/maven2
+  github_repo: https://github.com/fbiville/liquibase-asciidoc
+  liquibase_version: 4.20.0
+  mysqlj_version: 8.0.32
+  group_id: net.biville
+  group_id_url: net/biville
+  artifact_id: liquibase-asciidoc
+  version: 0.1.0-SNAPSHOT
+markdown_extensions:
+  - abbr
+  - admonition
+  - markdown_include.include:
+      base_path: docs
+  - pymdownx.highlight:
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: "#"

@@ -5,6 +5,11 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - 'documentation.Dockerfile'
+      - 'documentation.dockerignore'
+      - 'mkdocs.yml'
+      - 'docs/**'
 
 jobs:
   build:

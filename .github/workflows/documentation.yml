@@ -1,0 +1,22 @@
+name: Publish docs
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'documentation.Dockerfile'
+      - 'documentation.dockerignore'
+      - 'mkdocs.yml'
+      - 'docs/**'
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: ./documentation.sh gh-deploy
