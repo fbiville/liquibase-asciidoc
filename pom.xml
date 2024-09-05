@@ -48,7 +48,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
-        <liquibase.version>4.29.1</liquibase.version>
+        <liquibase.version>4.29.2</liquibase.version>
     </properties>
 
     <dependencies>
